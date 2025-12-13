@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸運扭蛋抽獎機</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #fef3c7;
+            background-image: radial-gradient(#fde68a 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* --- 扭蛋機 CSS 繪圖 --- */
+        .gacha-machine {
+            position: relative;
+            width: 300px;
+            height: 540px;
+            margin: 0 auto;
+            z-index: 10;
+        }
+
+        .gacha-top {
+            width: 240px;
+            height: 40px;
+            background: #ef4444;
+            border-radius: 20px 20px 0 0;
+            margin: 0 auto;
+            border: 4px solid #b91c1c;
+            border-bottom: none;
+            position: relative;
+            top: 5px;
+            z-index: 5;
+        }
+
+        .gacha-dome {
+            width: 260px;
+            height: 260px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 4px solid #e5e7eb;
+            border-radius: 50%;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset -10px -10px 20px rgba(255, 255, 255, 0.5), 
+                        inset 10px 10px 20px rgba(0, 0, 0, 0.1);
+            z-index: 4;
+            background-color: rgba(219, 234, 254, 0.4);
+        }
+
+        .ball {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            position: absolute;
+            border: 2px solid rgba(0,0,0,0.1);
+            box-shadow: inset -2px -2px 6px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .ball::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0,0,0,0.1);
+        }
+        .ball::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .gacha-base {
+            width: 260px;
+            height: 240px;
+            background: #ef4444;
+            margin: -60px auto 0;
+            border-radius: 20px;
+            border: 4px solid #b91c1c;
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .coin-slot {
+            width: 40px;
+            height: 60px;
+            background: #d1d5db;
+            position: absolute;
+            right: 20px;
+            top: 80px;
+            border-radius: 4px;
+            border: 2px solid #9ca3af;
+        }
+        .coin-slot::after {
+            content: '';
+            width: 6px;
+            height: 30px;
+            background: #374151;
+            position: absolute;
+            top: 15px;
+            left: 17px;
+            border-radius: 2px;
+        }
+
+        .knob-plate {
+            width: 70px;
+            height: 70px;
+            background: #fbbf24;
+            border-radius: 50%;
+            border: 4px solid #d97706;
+            margin-top: 40px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.1s;
+            z-index: 6;
+        }
+        
+        .knob-handle {
+            width: 54px;
+            height: 16px;
+            background: #fff;
+            border-radius: 10px;
+            position: absolute;
+        }
+        
+        .knob-handle.vertical {
+            width: 16px;
+            height: 54px;
+        }
+
+        .exit-hole {
+            width: 100px;
+            height: 60px;
+            background: #1f2937;
+            border-radius: 10px 10px 40px 40px;
+            position: absolute;
+            bottom: 10px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 1;
+        }
+
+        .dropped-ball {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid rgba(0,0,0,0.2);
+            position: relative;
+            bottom: -60px;
+            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1;
+        }
+        .dropped-ball::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0,0,0,0.2);
+        }
+        .dropped-ball::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .shake-machine {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        .shake-balls {
+            animation-name: churnBalls;
+            animation-duration: 0.6s; 
+            animation-iteration-count: infinite;
+            animation-timing-function: ease-in-out;
+        }
+
+        .rotate-knob {
+            animation: spinKnob 1s ease-out;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        @keyframes spinKnob {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes churnBalls {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-20px, -30px) rotate(90deg); }
+            50% { transform: translate(15px, -50px) rotate(180deg); }
+            75% { transform: translate(10px, -20px) rotate(270deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+
+        .tab-active {
+            background-color: #ef4444;
+            color: white;
+            border-color: #b91c1c;
+        }
+        .tab-inactive {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            border-color: #d1d5db;
+        }
+        
+        .result-modal {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        .ball-red { background: #f87171; }
+        .ball-blue { background: #60a5fa; }
+        .ball-green { background: #4ade80; }
+        .ball-yellow { background: #facc15; }
+        .ball-purple { background: #c084fc; }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #d1d5db; 
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af; 
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-start justify-center py-10 px-4">
+
+    <div class="max-w-5xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border-4 border-red-200 my-auto">
+        
+        <!-- 左側：扭蛋機視覺區 -->
+        <div class="w-full md:w-5/12 bg-blue-50 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-red-100 relative overflow-hidden">
+            
+            <div id="machine-container" class="gacha-machine">
+                <div class="gacha-top"></div>
+                
+                <div class="gacha-dome" id="dome"></div>
+
+                <div class="gacha-base">
+                    <!-- 標籤 -->
+                    <div class="bg-white px-3 py-1 rounded-full mt-4 text-sm font-bold text-red-500 border-2 border-red-200 z-10 shadow-sm">
+                        LUCKY DRAW
+                    </div>
+                    
+                    <div class="coin-slot"></div>
+
+                    <div class="knob-plate" id="knob">
+                        <div class="knob-handle"></div>
+                        <div class="knob-handle vertical"></div>
+                    </div>
+
+                    <div class="exit-hole">
+                        <div id="dropped-ball" class="dropped-ball ball-red"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 移除 animate-pulse 並修改文字 -->
+            <p class="mt-4 text-gray-500 font-bold text-center z-10">
+                <i class="fa-solid fa-arrow-right md:hidden"></i>
+                <span class="hidden md:inline">設定右側並點擊按鈕</span>
+                <i class="fa-solid fa-arrow-down md:hidden"></i>
+            </p>
+        </div>
+
+        <!-- 右側：控制面板 -->
+        <div class="w-full md:w-7/12 p-6 md:p-8 bg-white flex flex-col">
+            
+            <h1 class="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-ticket text-red-500"></i> 設定抽獎條件
+            </h1>
+
+            <!-- 頁籤切換 -->
+            <div class="flex mb-6 border-b-2 border-gray-200">
+                <button id="tab-name" class="flex-1 py-3 px-4 text-center font-bold border-b-4 transition-colors tab-active rounded-t-lg" onclick="switchTab('name')">
+                    <i class="fa-solid fa-users mr-2"></i> 姓名/名單抽籤
+                </button>
+                <button id="tab-number" class="flex-1 py-3 px-4 text-center font-bold border-b-4 transition-colors tab-inactive rounded-t-lg" onclick="switchTab('number')">
+                    <i class="fa-solid fa-arrow-down-1-9 mr-2"></i> 數字選號器
+                </button>
+            </div>
+
+            <!-- 姓名抽籤設定區 -->
+            <div id="panel-name" class="space-y-4 flex-1">
+                <div class="relative">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-gray-700 font-bold">輸入名單</label>
+                        <div class="flex gap-2">
+                            <input type="file" id="file-upload" accept=".txt" class="hidden" onchange="handleFileUpload(this)">
+                            <button onclick="document.getElementById('file-upload').click()" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded transition">
+                                <i class="fa-solid fa-file-import"></i> 匯入TXT
+                            </button>
+                            <button onclick="clearNames()" class="text-xs text-red-500 hover:text-red-700 hover:underline">清空文字框</button>
+                        </div>
+                    </div>
+                    
+                    <textarea id="name-input" class="w-full h-32 p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 transition resize-none" placeholder="王小明&#10;李大華&#10;陳小美; 張三"></textarea>
+                    
+                    <div class="text-sm bg-gray-50 p-2 rounded border border-gray-200 mt-2 flex justify-between items-center">
+                        <div>
+                            <span class="text-gray-500">總人數: <span id="name-total" class="font-bold text-gray-800">0</span></span>
+                            <span class="mx-2 text-gray-300">|</span>
+                            <span class="text-red-500">剩餘可抽: <span id="name-remaining" class="font-bold">0</span></span>
+                        </div>
+                        <button onclick="resetNamePool()" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-600 px-3 py-1 rounded font-bold transition flex items-center gap-1">
+                            <i class="fa-solid fa-rotate-right"></i> 開啟新的一輪
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">提示：支援換行或分號 ( ; ) 區隔。開啟新的一輪後所有人皆可再次被抽中。</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">抽取數量</label>
+                        <input type="number" id="name-draw-count" value="1" min="1" class="w-full p-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-400">
+                    </div>
+                    <div class="flex items-center pt-6">
+                        <label class="flex items-center cursor-pointer select-none" title="選中後，同一輪內不會抽到重複的人，直到開啟新的一輪">
+                            <input type="checkbox" id="name-remove" class="w-5 h-5 text-red-500 rounded focus:ring-red-400 border-gray-300" checked>
+                            <span class="ml-2 text-gray-700 font-bold">本輪不重複</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 數字選號設定區 -->
+            <div id="panel-number" class="space-y-4 hidden flex-1">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">起始號碼</label>
+                        <input type="number" id="num-min" value="1" class="w-full p-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-400">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">結束號碼</label>
+                        <input type="number" id="num-max" value="100" class="w-full p-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-400">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">排除號碼 (用逗號分隔)</label>
+                    <input type="text" id="num-exclude" placeholder="例如: 4, 13, 44" class="w-full p-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-400">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">抽取數量</label>
+                        <input type="number" id="num-draw-count" value="1" min="1" class="w-full p-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-400">
+                    </div>
+                    <div class="flex flex-col justify-center pt-2">
+                         <label class="flex items-center cursor-pointer select-none mb-1">
+                            <input type="checkbox" id="num-remove" class="w-5 h-5 text-blue-500 rounded focus:ring-blue-400 border-gray-300" checked>
+                            <span class="ml-2 text-gray-700 font-bold">本輪不重複</span>
+                        </label>
+                        <button onclick="resetNumberPool()" class="text-xs text-left text-blue-500 hover:text-blue-700 underline pl-7">
+                            <i class="fa-solid fa-rotate-right"></i> 開啟新的一輪
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 動作按鈕 -->
+            <div class="mt-8">
+                <button id="draw-btn" onclick="startDraw()" class="w-full bg-red-500 hover:bg-red-600 text-white text-xl font-bold py-4 px-6 rounded-xl shadow-lg transform transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <span id="btn-text">開始扭蛋!</span>
+                    <i class="fa-solid fa-gift"></i>
+                </button>
+            </div>
+
+            <!-- 歷史紀錄 -->
+            <div class="mt-6 border-t pt-4">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-gray-500 font-bold text-sm uppercase tracking-wider">
+                        <span id="history-label">姓名抽籤紀錄</span>
+                    </h3>
+                    <button onclick="clearHistory()" class="text-xs text-gray-400 hover:text-red-500">清除此區紀錄</button>
+                </div>
+                
+                <div id="history-list-name" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scroll p-1">
+                    <span class="text-gray-400 text-sm w-full text-center py-2">尚未開始抽籤...</span>
+                </div>
+
+                <div id="history-list-number" class="hidden flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scroll p-1">
+                    <span class="text-gray-400 text-sm w-full text-center py-2">尚未開始選號...</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 結果彈跳視窗 -->
+    <div id="result-modal" class="fixed inset-0 result-modal hidden flex items-center justify-center z-50 p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform scale-90 transition-transform duration-300" id="modal-content">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl text-yellow-500 animate-bounce">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">恭喜中獎!</h2>
+                <div class="text-gray-500 text-sm mb-6" id="result-subtitle">本次幸運得主</div>
+                
+                <div id="result-display" class="bg-red-50 border-2 border-red-100 rounded-xl p-4 mb-6 max-h-60 overflow-y-auto">
+                    <!-- 結果將顯示於此 -->
+                </div>
+
+                <button onclick="closeModal()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-xl transition">
+                    太棒了!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 全域變數 ---
+        let currentMode = 'name'; // 'name' or 'number'
+        let isAnimating = false;
+        
+        // 姓名模式狀態
+        let originalNameList = []; // 原始完整名單
+        let availableNamePool = []; // 當前剩餘可抽名單
+        
+        // 數字模式狀態
+        let numberPool = [];
+        let isNumberPoolInitialized = false;
+
+        // --- 初始化裝飾球 ---
+        function initBalls() {
+            const dome = document.getElementById('dome');
+            const colors = ['#f87171', '#60a5fa', '#4ade80', '#facc15', '#c084fc', '#fb923c'];
+            dome.innerHTML = '';
+            for(let i=0; i<12; i++) {
+                const ball = document.createElement('div');
+                ball.className = 'ball';
+                ball.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                const left = Math.random() * (220 - 40); 
+                const top = 120 + Math.random() * (140 - 40); 
+                ball.style.left = `${left}px`;
+                ball.style.top = `${top}px`;
+                ball.style.transform = `rotate(${Math.random() * 360}deg)`;
+                dome.appendChild(ball);
+            }
+        }
+
+        // --- 頁籤切換 ---
+        function switchTab(mode) {
+            if(isAnimating) return;
+            currentMode = mode;
+            
+            const els = {
+                tabName: document.getElementById('tab-name'),
+                tabNum: document.getElementById('tab-number'),
+                panelName: document.getElementById('panel-name'),
+                panelNum: document.getElementById('panel-number'),
+                btn: document.getElementById('draw-btn'),
+                hLabel: document.getElementById('history-label'),
+                hName: document.getElementById('history-list-name'),
+                hNum: document.getElementById('history-list-number')
+            };
+
+            if(mode === 'name') {
+                els.tabName.className = els.tabName.className.replace('tab-inactive', 'tab-active');
+                els.tabNum.className = els.tabNum.className.replace('tab-active', 'tab-inactive');
+                els.panelName.classList.remove('hidden');
+                els.panelNum.classList.add('hidden');
+                els.btn.className = els.btn.className.replace('bg-blue-500', 'bg-red-500').replace('hover:bg-blue-600', 'hover:bg-red-600');
+                els.hLabel.innerText = '姓名抽籤紀錄';
+                els.hName.classList.remove('hidden');
+                els.hNum.classList.add('hidden');
+            } else {
+                els.tabNum.className = els.tabNum.className.replace('tab-inactive', 'tab-active');
+                els.tabName.className = els.tabName.className.replace('tab-active', 'tab-inactive');
+                els.panelNum.classList.remove('hidden');
+                els.panelName.classList.add('hidden');
+                els.btn.className = els.btn.className.replace('bg-red-500', 'bg-blue-500').replace('hover:bg-red-600', 'hover:bg-blue-600');
+                els.hLabel.innerText = '數字選號紀錄';
+                els.hNum.classList.remove('hidden');
+                els.hName.classList.add('hidden');
+            }
+        }
+
+        // --- 姓名輸入邏輯 ---
+        function parseInput() {
+            const text = document.getElementById('name-input').value;
+            // 支援換行或分號分隔
+            const list = text.split(/[\n;]+/).map(t => t.trim()).filter(t => t !== '');
+            
+            // 只有當輸入框內容實質改變，或者目前 pool 為空（初始化）時，才重置
+            // 但為了簡單與避免混淆，每次輸入變更我們都視為更新了原始名單
+            // 並重置 availablePool (因為名單變了，之前的排除邏輯可能失效)
+            
+            // 比較長度是否不同，或內容是否不同（簡單檢查長度）
+            if (list.length !== originalNameList.length || !list.every((val, index) => val === originalNameList[index])) {
+                originalNameList = list;
+                resetNamePool(); 
+            }
+            updateNameStats();
+        }
+
+        document.getElementById('name-input').addEventListener('input', parseInput);
+
+        function resetNamePool() {
+            availableNamePool = [...originalNameList];
+            updateNameStats();
+            
+            // 視覺回饋
+            const btn = document.querySelector('button[onclick="resetNamePool()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> 已開啟新的一輪';
+            setTimeout(() => { btn.innerHTML = originalText; }, 1000);
+        }
+
+        function updateNameStats() {
+            document.getElementById('name-total').innerText = originalNameList.length;
+            document.getElementById('name-remaining').innerText = availableNamePool.length;
+            
+            const remEl = document.getElementById('name-remaining');
+            if(availableNamePool.length === 0 && originalNameList.length > 0) {
+                remEl.className = 'font-bold text-gray-400';
+            } else {
+                remEl.className = 'font-bold text-red-600';
+            }
+        }
+
+        function clearNames() {
+            document.getElementById('name-input').value = '';
+            originalNameList = [];
+            resetNamePool();
+        }
+
+        // --- 檔案匯入邏輯 ---
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                document.getElementById('name-input').value = text;
+                parseInput(); // 觸發解析與重置
+                input.value = ''; // 清空 input 讓重複上傳同一檔案也能觸發
+            };
+            reader.readAsText(file);
+        }
+
+        // --- 數字模式重置 ---
+        function resetNumberPool() {
+            isNumberPoolInitialized = false;
+            numberPool = [];
+            alert('號碼池已重置！已開啟新的一輪，所有號碼皆可再次被抽出。');
+        }
+
+        // --- 核心抽獎邏輯 ---
+        function getWinners() {
+            const winners = [];
+            
+            if (currentMode === 'name') {
+                // 如果 pool 是空的（可能是剛載入或手動輸入後還沒觸發 input event），嘗試解析一次
+                if (originalNameList.length === 0) parseInput();
+
+                const count = parseInt(document.getElementById('name-draw-count').value) || 1;
+                const remove = document.getElementById('name-remove').checked;
+                
+                if (originalNameList.length === 0) {
+                    alert('名單為空，請輸入名字或匯入檔案！');
+                    return null;
+                }
+                
+                // 如果是「不重複」模式，使用 availableNamePool
+                // 如果是「允許重複」模式，每次都從 originalNameList 隨機抽（但單次抽取的 count 內不重複）
+                let sourceArray = remove ? availableNamePool : [...originalNameList];
+
+                if (remove && sourceArray.length === 0) {
+                    alert('所有人皆已抽出！請點擊「開啟新的一輪」讓所有人重新歸隊。');
+                    return null;
+                }
+
+                if (count > sourceArray.length) {
+                    const msg = remove 
+                        ? `剩餘可抽人數不足！(剩 ${sourceArray.length} 人)` 
+                        : `抽籤數量 (${count}) 超過名單總數 (${sourceArray.length})！`;
+                    alert(msg);
+                    return null;
+                }
+
+                // 執行抽取
+                for (let i = 0; i < count; i++) {
+                    const idx = Math.floor(Math.random() * sourceArray.length);
+                    const winner = sourceArray[idx];
+                    winners.push(winner);
+                    sourceArray.splice(idx, 1); // 從暫存陣列移除
+                }
+
+                // 如果是 remove 模式，更新全域 availableNamePool
+                if (remove) {
+                    availableNamePool = sourceArray;
+                    updateNameStats();
+                }
+
+            } else {
+                // Number Mode
+                const min = parseInt(document.getElementById('num-min').value);
+                const max = parseInt(document.getElementById('num-max').value);
+                const excludeStr = document.getElementById('num-exclude').value;
+                const count = parseInt(document.getElementById('num-draw-count').value) || 1;
+                const remove = document.getElementById('num-remove').checked;
+
+                if (min >= max) {
+                    alert('起始號碼必須小於結束號碼！');
+                    return null;
+                }
+
+                // 初始化或重置號碼池
+                // 如果不重複模式 (remove=true) 且未初始化或已空，重新建立
+                // 如果允許重複 (remove=false)，每次都重新建立
+                if (!remove || !isNumberPoolInitialized || numberPool.length === 0) {
+                    // 只有在真的需要重建時才重建，保留 "不重複" 的狀態
+                    if (!remove || !isNumberPoolInitialized) {
+                        let tempPool = [];
+                        for(let i=min; i<=max; i++) tempPool.push(i);
+
+                        if (excludeStr.trim() !== '') {
+                            const excludes = excludeStr.split(/[,，\s]+/).map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                            tempPool = tempPool.filter(n => !excludes.includes(n));
+                        }
+                        numberPool = tempPool;
+                        isNumberPoolInitialized = true;
+                    } else if (numberPool.length === 0) {
+                         alert('號碼池已空！請點擊「開啟新的一輪」或修改範圍。');
+                         return null;
+                    }
+                }
+
+                if (count > numberPool.length) {
+                    alert(`剩餘號碼不足 ${count} 個 (剩餘 ${numberPool.length})`);
+                    return null;
+                }
+
+                // 暫存池用於單次抽取 (若是 remove=false，我們不改全域 pool，只改這個暫存池來確保單次不重複)
+                // 若是 remove=true，我們直接操作全域 numberPool
+                
+                // 修正邏輯：為了支援單次不重複但允許跨次重複，
+                // 若 remove=false，我們拷貝一份 numberPool 來抽
+                let drawPool = remove ? numberPool : [...numberPool];
+
+                for (let i = 0; i < count; i++) {
+                    const idx = Math.floor(Math.random() * drawPool.length);
+                    winners.push(drawPool[idx]);
+                    drawPool.splice(idx, 1); 
+                }
+                
+                // 若是 remove=true，原本的 numberPool 已經被修改了嗎？
+                // 上面如果是 remove=true, drawPool 就是 numberPool 的 reference? 
+                // JS array assignment 是 reference。
+                // 為了安全起見，重寫一下：
+                
+                // 重新實作抽取邏輯以確保清晰
+                /* 修正：上面的 splice 在 remove=true 時直接作用於 numberPool (因為參照)
+                   但 remove=false 時，作用於 copy。這樣是對的。
+                */
+            }
+
+            return winners;
+        }
+
+        // --- 動畫與流程 ---
+        function startDraw() {
+            if (isAnimating) return;
+
+            // 預檢查
+            if (currentMode === 'name' && document.getElementById('name-input').value.trim() === '') {
+                alert('請先輸入名單！');
+                return;
+            }
+
+            const winners = getWinners();
+            if (!winners) return;
+
+            isAnimating = true;
+            const btn = document.getElementById('draw-btn');
+            const originalBtnText = document.getElementById('btn-text').innerText;
+            btn.disabled = true;
+            document.getElementById('btn-text').innerText = "扭蛋中...";
+
+            // 動畫流程
+            document.getElementById('machine-container').classList.add('shake-machine');
+            
+            const balls = document.querySelectorAll('.gacha-dome .ball');
+            balls.forEach(b => {
+                b.classList.add('shake-balls');
+                b.style.animationDelay = `-${Math.random()}s`;
+                b.style.animationDuration = `${0.3 + Math.random() * 0.4}s`;
+            });
+
+            document.getElementById('knob').classList.add('rotate-knob');
+
+            setTimeout(() => {
+                document.getElementById('machine-container').classList.remove('shake-machine');
+                balls.forEach(b => {
+                    b.classList.remove('shake-balls');
+                    b.style.animation = 'none';
+                    const left = Math.random() * (220 - 40);
+                    const top = 120 + Math.random() * (140 - 40);
+                    b.style.left = `${left}px`;
+                    b.style.top = `${top}px`;
+                    b.style.transform = `rotate(${Math.random() * 360}deg)`;
+                });
+                document.getElementById('knob').classList.remove('rotate-knob');
+
+                const droppedBall = document.getElementById('dropped-ball');
+                const colors = ['ball-red', 'ball-blue', 'ball-green', 'ball-yellow', 'ball-purple'];
+                droppedBall.className = `dropped-ball ${colors[Math.floor(Math.random()*colors.length)]}`;
+                droppedBall.style.bottom = '10px';
+
+                setTimeout(() => {
+                    showResult(winners);
+                    
+                    setTimeout(() => {
+                        droppedBall.style.bottom = '-60px';
+                        isAnimating = false;
+                        btn.disabled = false;
+                        document.getElementById('btn-text').innerText = originalBtnText;
+                        balls.forEach(b => b.style = '');
+                        initBalls();
+                    }, 500);
+                }, 800); 
+            }, 1500);
+        }
+
+        function showResult(winners) {
+            const modal = document.getElementById('result-modal');
+            const display = document.getElementById('result-display');
+            const targetListId = currentMode === 'name' ? 'history-list-name' : 'history-list-number';
+            const historyList = document.getElementById(targetListId);
+
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; 
+            modal.classList.remove('opacity-0');
+            document.getElementById('modal-content').classList.remove('scale-90');
+            document.getElementById('modal-content').classList.add('scale-100');
+
+            display.innerHTML = '';
+
+            if (historyList.querySelector('.text-center')) {
+                const emptyMsg = historyList.querySelector('.text-center');
+                if(emptyMsg.innerText.includes('尚未')) emptyMsg.remove();
+            }
+
+            winners.forEach(w => {
+                const tag = document.createElement('div');
+                tag.className = 'text-xl font-bold text-gray-700 bg-white p-2 rounded shadow-sm mb-2 text-center animate-pulse';
+                tag.innerText = w;
+                display.appendChild(tag);
+
+                const badge = document.createElement('span');
+                badge.className = `px-3 py-1 rounded-full text-sm font-bold shadow-sm mb-2 ${currentMode === 'name' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`;
+                badge.innerText = w;
+                historyList.prepend(badge);
+            });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('result-modal');
+            modal.classList.add('opacity-0');
+            document.getElementById('modal-content').classList.remove('scale-100');
+            document.getElementById('modal-content').classList.add('scale-90');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function clearHistory() {
+            const targetListId = currentMode === 'name' ? 'history-list-name' : 'history-list-number';
+            const historyList = document.getElementById(targetListId);
+            const msg = currentMode === 'name' ? '尚未開始抽籤...' : '尚未開始選號...';
+            historyList.innerHTML = `<span class="text-gray-400 text-sm w-full text-center py-2">${msg}</span>`;
+        }
+
+        window.onload = initBalls;
+    </script>
+</body>
+</html>
